@@ -1,5 +1,5 @@
 import pygame
-from game import World
+from environment import World
 import sys, os
 
 pygame.init()

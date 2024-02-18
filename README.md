@@ -1,5 +1,5 @@
 # Reinforcement Learning
-Little Reinforcement Learning Project, trying to solve Snake.
+Reinforcement Learning project playing snake.
 
 
 # Dependencies:

@@ -1,0 +1,49 @@
+name: Sync Docs to Another Repository
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  sync_docs:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Generate a token
+        id: generate-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ vars.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+
+      - name: Checkout source repository
+        uses: actions/checkout@v2
+
+      - name: Config git
+        run: git config --global url.https://MINT-EC-KI-Cluster:${{ steps.generate-token.outputs.token }}@github.com/.insteadOf https://github.com/
+          
+      - name: Clone destination repository
+        run: git clone https://${{  steps.generate-token.outputs.token }}@github.com/MINT-EC-KI-Cluster/platform.git temp_repo
+
+      - name: Ensure destination folder exists
+        run: mkdir -p temp_repo/pages/${{ github.event.repository.name }}
+        
+      - name: Copy docs folder
+        run: cp -r docs/. temp_repo/pages/${{ github.event.repository.name }}
+  
+      - name: Commit and push changes
+        working-directory: temp_repo
+        run: |
+            git config --global user.email "github-actions@github.com"
+            git config --global user.name "GitHub Actions"
+            git remote set-url origin https://github.com/${{ github.repository_owner }}/platform.git
+            git add .
+            git commit -m "Sync docs folder from ${GITHUB_REPOSITORY}"
+            git push origin main
+        env:
+          GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}
+          
+      - name: Cleanup
+        run: rm -rf temp_repo

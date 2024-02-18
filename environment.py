@@ -1,6 +1,12 @@
 import random
 import pygame
-import numpy as np
+import helper
+from enum import Enum
+
+class Direction(Enum):
+    LEFT = 0
+    FORWARD = 1
+    RIGHT = 2
 
 class World:
     # 1 is a wall
@@ -8,30 +14,32 @@ class World:
     # 8 is the snake body
     # 0 is an empty space
     # 2 is food
+    screen_width = 960
+    screen_height = 960
+    blockSize = 60
+    frame_rate = 60
+
     
     def __init__(self):
-        self.grid = [
-                [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-                [1, 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]]
+        pygame.init()
+
+        self.graphics_loader = helper.GraphicsLoader(World.blockSize)
+
+        self.screen = pygame.display.set_mode((World.screen_width, World.screen_height))
+        self.background = pygame.Surface((World.screen_width, World.screen_height))
+        self.clock = pygame.time.Clock()
         
-        self.snake = self.Snake([1, 1])
+        self.grid_width = int(World.screen_width / World.blockSize)
+        self.grid_height = int(World.screen_height / World.blockSize)
+        
+        self.grid = helper.make_grid(self.grid_width, self.grid_height)
+        self.snake = World.Snake([int(self.grid_width / 2), int(self.grid_height / 2)])
         self.foods = [self.rand_unoccupied_pos()]
         self.grid[self.foods[0][1]][self.foods[0][0]] = 2
-        self.points = 0
+        self.score = 0
+        self.curr_frame = 0
+
+        self.draw_grid()
     
     def rand_unoccupied_pos(self):
         rand_y, rand_x = (0, 0)
@@ -45,17 +53,63 @@ class World:
         self.grid[pos[1]][pos[0]] = 2
         self.foods.append(pos)
     
-    def step(self, input_orientation):
+    def step(self, input_orientation: list):
+        if (input_orientation[0] == 1):
+            input_orientation = Direction.LEFT
+        elif (input_orientation[1] == 1):
+            input_orientation = Direction.FORWARD
+        elif (input_orientation[2] == 1):
+            input_orientation = Direction.RIGHT
+
+        # 1. grab all events
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                quit()
+        
+        reward = 0
+        game_over = False
+        # 2. check if lost
+        if self.danger_in_direction(input_orientation) == 1 or self.curr_frame > (100 * (self.score + 1)):
+            reward = -10
+            game_over = True
+            return reward, game_over, self.score
+
+        # 3. move
         self.grid = self.snake.move(input_orientation, self.grid)
+        self.curr_frame += 1
+
+        # 4. check for apple
         for i in range(len(self.foods)):
             if self.grid[self.foods[i][1]][self.foods[i][0]] == 9:
-                self.points += 1
+                self.score += 1
+                reward += 10
                 self.foods.pop(i)
                 self.init_new_food()
+        
+        # 5. update ui
+        self.update_ui()
+        self.clock.tick(World.frame_rate)    
+
+        # 6. return reward 
+        return reward, game_over, self.score 
+
+    def reset(self):
+        self.grid = helper.make_grid(self.grid_width, self.grid_height)
+        self.snake = World.Snake([int(self.grid_width / 2), int(self.grid_height / 2)])
+        self.foods = [self.rand_unoccupied_pos()]
+        self.grid[self.foods[0][1]][self.foods[0][0]] = 2
+        self.score = 0
+        self.curr_frame = 0
     
-    # METHOD IS NOT FINAL -> WILL BE REMOVED AND REPLACED WITH STATES
-    def check_if_move_kills(self, input_orientation):
-        return self.snake.check_if_move_kills(input_orientation, self.grid)
+    def danger_in_direction(self, direction: Direction):
+        orientation = self.snake.get_new_orientation(direction)
+        curr_pos = helper.sum_arrays(self.snake.head.pos, orientation)
+        distance = 1
+        while self.grid[curr_pos[1]][curr_pos[0]] == 0 or self.grid[curr_pos[1]][curr_pos[0]] == 2:
+            distance += 1
+            curr_pos = helper.sum_arrays(curr_pos, orientation)
+        return distance
     
     def print_grid(self):
         for i in self.grid:
@@ -63,20 +117,54 @@ class World:
     
     def get_grid(self):
         return self.grid
-                
     
+    def draw_grid(self):
+        for y in range(len(self.grid)):
+            for x in range(len(self.grid[y])):
+                if self.grid[y][x] == 1:
+                    self.background.blit(self.graphics_loader.fence, (x * World.blockSize, y * World.blockSize))
+                else:
+                    if ((x + y) % 2 == 0):
+                        self.background.blit(self.graphics_loader.light_blue_tile, (x * World.blockSize, y * World.blockSize))
+                    else:
+                        self.background.blit(self.graphics_loader.dark_blue_tile, (x * World.blockSize, y * World.blockSize))
+    
+    def update_ui(self):
+        self.screen.blit(self.background, (0, 0))
+        for y in range(len(self.grid)):
+            for x in range(len(self.grid[y])):
+                if self.grid[y][x] == 9:
+                    self.screen.blit(self.graphics_loader.snake_head, (x * World.blockSize, y * World.blockSize))
+                elif self.grid[y][x] == 8:
+                    self.screen.blit(self.graphics_loader.snake_body, (x * World.blockSize, y * World.blockSize))
+                elif self.grid[y][x] == 2:
+                    self.screen.blit(self.graphics_loader.apple, (x * World.blockSize, y * World.blockSize))
+        pygame.display.flip()
+
             
     class Snake:
-        def __init__(self, start_pos):
+        def __init__(self, start_pos: list):
             self.head = self.Node(None, start_pos)
             self.orientation = [1, 0]
         
-        def move(self, input_orientation, grid):
-            # Don't go back, to where you came from
-            if not np.array_equal(np.array(input_orientation), np.array(self.orientation) * -1):
-                self.orientation = input_orientation
+        def get_new_orientation(self, input: Direction):
+            orientation = [self.orientation[0], self.orientation[1]]
+            if (input == Direction.RIGHT):
+                # Turn Right
+                y = orientation[1] * -1
+                orientation[1] = orientation[0]
+                orientation[0] = y
+            elif (input == Direction.LEFT):
+                # Turn Left
+                x = orientation[0] * -1
+                orientation[0] = orientation[1]
+                orientation[1] = x
+            return orientation
+
+        def move(self, input: Direction, grid: list):
+            self.orientation = self.get_new_orientation(input)
                 
-            new_head_pos = np.array(self.head.pos) + np.array(self.orientation)
+            new_head_pos = helper.sum_arrays(self.head.pos, self.orientation)
             
             if grid[new_head_pos[1]][new_head_pos[0]] == 2:
                 # The snake grows when getting food, so we can just add the head and be done
@@ -104,20 +192,7 @@ class World:
                 n = n.next_node
             
             return grid
-        
-        
-        # METHOD IS NOT FINAL -> WILL BE REMOVED AND REPLACED WITH STATES
-        def check_if_move_kills(self, input_orientation, grid):
-            # Don't go back, to where you came from
-            if not np.array_equal(np.array(input_orientation), np.array(self.orientation) * -1):
-                self.orientation = input_orientation
-                
-            new_head_pos = np.array(self.head.pos) + np.array(self.orientation)
-            new_pos = grid[new_head_pos[1]][new_head_pos[0]]
-            if new_pos == 1 or new_pos == 8:
-                return True
-            return False
-        
+
         class Node:
             def __init__(self, next_node=None, pos=[]):
                 self.next_node = next_node

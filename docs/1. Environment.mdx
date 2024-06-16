@@ -2,8 +2,8 @@
 
 ## Das "Spielfeld" - Environment
 Um überhaupt ein Modell auf das Spiel Snake zu trainieren, braucht es ein Medium in welchem die Spielregeln definiert sind.\
-Oft wird dies beim Reinforcement-Learning als ==environment== bezeichnet. Im Projekt findet man dies als `World` Klasse in der environment.py Datei.\
-Für unsere Zwecke ist nicht alles aus dieser Python Datei wichtig. Um es zusammenzufassen, gibt es immer ein Welt Objekt, welches ein Spielfeld simuliert.\  
+Oft wird dies beim Reinforcement-Learning als `environment` bezeichnet. Im Projekt findet man dies als `World` Klasse in der `environment.py` Datei.\
+Für unsere Zwecke ist nicht alles aus dieser Python Datei wichtig. Um es zusammenzufassen, gibt es immer ein Welt Objekt, welches ein Spielfeld simuliert.\
 Für unsere KI Zwecke ist jedoch die step() methode wichtig:
 ``` 
 def step(self, input_orientation: list):
@@ -53,7 +53,7 @@ Geradeaus -> [0, 1, 0]\
 Rechts -> [0, 0, 1]\
 Die Methode gibt 3 Werte zurück:
 - ```reward``` -> durch diesen Wert wird dem Neuronalen-Netzwerk vermittelt wie gut oder wie schlecht ein Spielzug ist. Je größer, desto "besser". Einen Apfel zu essen wird z.B. mit +10 reward belohnt. Zu verlieren wird mit -10 reward bestraft.\
-**ACHTUNG** dieser Wert soll später durch die Loss-Function so groß wie möglich gehalten werden.
+`ACHTUNG` dieser Wert soll später durch die Loss-Function so groß wie möglich gehalten werden.
 - ```game_over``` -> ein boolean Wert ob verloren ist oder nicht.
 - ```self.score``` -> die jetzige Punktzahl (einen Apfel zu essen gibt einen Punkt)
 
@@ -62,4 +62,4 @@ Auch wichtig ist die get_grid() Methode:
 def get_grid(self):
         return self.grid
 ```
-Diese wird von dem sogenannten **Agenten** genutzt um den **State** herauszufinden. Was mit diesen Begriffen gemeint ist kommt jetzt.
+Diese wird von dem sogenannten `Agenten` genutzt um den `State` herauszufinden. Was mit diesen Begriffen gemeint ist kommt jetzt.

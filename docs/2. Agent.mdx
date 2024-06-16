@@ -78,7 +78,8 @@ Die `remember` Methode wird nach jedem Spielzug aufgerufen. Diese speichert im m
 - reward -> die Belohnung die wir von der step() Methode zurückkriegen  
 - next_state -> der state nach dem Zug  
 - done -> ob das Spiel nach dem Zug vorbei ist  
-da jetzt all diese Situationen im "Gedächtnis" gespeichert sind, können sie in train_long_memory() verwendet werden. Diese Methode nimmt einen Zufälligen Batch aus diesen Situationen und trainiert das Modell auf diesen Batch. (Wie der training step verläuft und wie das Modell insgesamt aussieht, wird im nächsten Teil besprochen)  
+  
+Da jetzt all diese Situationen im "Gedächtnis" gespeichert sind, können sie in train_long_memory() verwendet werden. Diese Methode nimmt einen Zufälligen Batch aus diesen Situationen und trainiert das Modell auf diesen Batch. (Wie der training step verläuft und wie das Modell insgesamt aussieht, wird im nächsten Teil besprochen)  
 train_long_memory() wird nach jeder Runde Snake aufgerufen.  
 Im gegensatz zu train_short_memory(). Diese macht das gleiche wie train_long_memory(), nur mit dem jetzigen state und wird jeden Schritt aufgerufen.  
 

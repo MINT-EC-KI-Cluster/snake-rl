@@ -1,0 +1,65 @@
+# Teil 1
+
+## Das "Spielfeld" - Environment
+Um überhaupt ein Modell auf das Spiel Snake zu trainieren, braucht es ein Medium in welchem die Spielregeln definiert sind.\
+Oft wird dies beim Reinforcement-Learning als ==environment== bezeichnet. Im Projekt findet man dies als `World` Klasse in der environment.py Datei.\
+Für unsere Zwecke ist nicht alles aus dieser Python Datei wichtig. Um es zusammenzufassen, gibt es immer ein Welt Objekt, welches ein Spielfeld simuliert.\  
+Für unsere KI Zwecke ist jedoch die step() methode wichtig:
+``` 
+def step(self, input_orientation: list):
+        if (input_orientation[0] == 1):
+            input_orientation = Direction.LEFT
+        elif (input_orientation[1] == 1):
+            input_orientation = Direction.FORWARD
+        elif (input_orientation[2] == 1):
+            input_orientation = Direction.RIGHT
+
+        # 1. grab all events
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                quit()
+        
+        reward = 0
+        game_over = False
+        # 2. check if lost
+        if self.danger_in_direction(input_orientation) == 1 or self.curr_frame > (100 * (self.score + 1)):
+            reward = -10
+            game_over = True
+            return reward, game_over, self.score
+
+        # 3. move
+        self.grid = self.snake.move(input_orientation, self.grid)
+        self.curr_frame += 1
+
+        # 4. check for apple
+        for i in range(len(self.foods)):
+            if self.grid[self.foods[i][1]][self.foods[i][0]] == 9:
+                self.score += 1
+                reward += 10
+                self.foods.pop(i)
+                self.init_new_food()
+        
+        # 5. update ui
+        self.update_ui()
+        self.clock.tick(World.frame_rate)    
+
+        # 6. return reward 
+        return reward, game_over, self.score
+```
+Diese kriegt jeden Spielzug von unserem Neuronalen Netzwerk eine Entscheidung in welche Richtung sich die Schlange bewegen soll, in Form eines 1-Dimensionalen Arrays mit Länge 3.\
+Links -> [1, 0, 0]\
+Geradeaus -> [0, 1, 0]\
+Rechts -> [0, 0, 1]\
+Die Methode gibt 3 Werte zurück:
+- ```reward``` -> durch diesen Wert wird dem Neuronalen-Netzwerk vermittelt wie gut oder wie schlecht ein Spielzug ist. Je größer, desto "besser". Einen Apfel zu essen wird z.B. mit +10 reward belohnt. Zu verlieren wird mit -10 reward bestraft.\
+**ACHTUNG** dieser Wert soll später durch die Loss-Function so groß wie möglich gehalten werden.
+- ```game_over``` -> ein boolean Wert ob verloren ist oder nicht.
+- ```self.score``` -> die jetzige Punktzahl (einen Apfel zu essen gibt einen Punkt)
+
+Auch wichtig ist die get_grid() Methode:
+```
+def get_grid(self):
+        return self.grid
+```
+Diese wird von dem sogenannten **Agenten** genutzt um den **State** herauszufinden. Was mit diesen Begriffen gemeint ist kommt jetzt.

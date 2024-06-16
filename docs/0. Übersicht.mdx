@@ -1,0 +1,56 @@
+# Snake AI
+
+## Überblick
+In diesem Projekt schauen wir uns ein *Reinforcement-Learning* Projekt zum Spiel Snake an. 
+
+## Ziel
+Das Ziel dieses Projekts ist es beispielhaft kennenzulernen wie man, mit der [Pytorch](https://pytorch.org/) library, ein etwas komplexeres neuronales Netzwerk implementiert und lernen die Grundlagen von *Reinforcement-Learning* kennen.
+
+## Projekt
+Den Quellcode des Projekts und wie du es ausführst findest du [hier](https://github.com/MINT-EC-KI-Cluster/snake-rl)
+
+
+
+
+### Der Agent
+Ein sogenannter *Agent* ist im Reinforcement-Learning die Schnittstelle zwischen dem Neuronalen-Netzwerk / Modell und dem environment. In unserem Fall ist das *environment* unser Snake spiel. Dieses kann aber in verschiedenen Anwendungen, z.B. dem Autonomen Fahren ein völlig anderes sein.\
+Der *Agent* dient also dazu das Modell anhand des environments zu nutzen und zu trainieren.\
+In unserem Fall ist der Code für den Agenten in der 'agent.py' Datei zu finden.
+Er funktioniert wiefolgt:
+die train() Methode, ist die Methode welche für das ganze Training zuständig ist:
+```
+def train():
+    total_score = 0
+    record = 0
+    agent = Agent()
+    game = environment.World()
+    while True:
+        # get old state
+        state_old = Agent.get_state(game)
+
+        # get move
+        final_move = agent.get_action(state_old)
+
+        # perform move and get new state
+        reward, done, score = game.step(final_move)
+        state_new = Agent.get_state(game)
+
+        # train short memory
+        agent.train_short_memory(state_old, final_move, reward, state_new, done)
+
+        # remember
+        agent.remember(state_old, final_move, reward, state_new, done)
+
+        if done:
+            # train long memory, print result
+            game.reset()
+            agent.n_games += 1
+            agent.train_long_memory()
+
+            if score > record:
+                record = score
+                agent.model.save()
+
+            print('Game', agent.n_games, 'Score', score, 'Record:', record)
+```
+

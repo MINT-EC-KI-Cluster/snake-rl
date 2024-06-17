@@ -15,4 +15,7 @@ die oben genannten dependencies runterladen
 `pip install pytorch` - sollte auch numpy beinhalten. Wenn nicht -> `pip install numpy`  
 `pip install pygame`
 
+### Schritt 3
+Die `agent.py` Datei ausführen und Spaß haben :D
+
 

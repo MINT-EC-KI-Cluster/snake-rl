@@ -11,8 +11,8 @@ Reinforcement Learning Projekt zum bekannten "Snake Spiel".
 mit git das Projekt auf den Rechner ziehen: `git clone https://github.com/MINT-EC-KI-Cluster/snake-rl`
 
 ### Schritt 2
-die oben genannten dependencies runterladen
-`pip install pytorch` - sollte auch numpy beinhalten. Wenn nicht -> `pip install numpy`
+die oben genannten dependencies runterladen  
+`pip install pytorch` - sollte auch numpy beinhalten. Wenn nicht -> `pip install numpy`  
 `pip install pygame`
 
 
